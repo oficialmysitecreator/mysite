@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+</head>
+<body>
+
+<div id="login">
+  <input id="u" placeholder="Usuário"><br>
+  <input id="p" type="password" placeholder="Senha"><br>
+  <button onclick="l()">Entrar</button><br>
+  <a href="#" onclick="r()">Registrar</a><br>
+  <span id="m" style="color:red"></span>
+</div>
+
+<div id="reg" style="display:none">
+  <input id="n" placeholder="Nome"><br>
+  <input id="e" placeholder="Email"><br>
+  <input id="c" placeholder="CPF"><br>
+  <input id="t" placeholder="Telefone"><br>
+  <input id="u2" placeholder="Usuário"><br>
+  <input id="p2" type="password" placeholder="Senha"><br>
+  <button onclick="re()">Registrar</button><br>
+  <a href="#" onclick="showLogin()">Voltar</a><br>
+  <span id="m2" style="color:red"></span>
+</div>
+
+<div id="adm" style="display:none">
+  <button onclick="out()">Sair</button><br>
+  <table>
+    <thead>
+      <tr><th>User</th><th>Nome</th><th>Email</th><th>CPF</th><th>Tel</th><th>Adm</th><th>Ações</th></tr>
+    </thead>
+    <tbody id="tb"></tbody>
+  </table>
+</div>
+
+<script>
+if(!localStorage.u){
+  localStorage.u=JSON.stringify([{user:'admin',pass:'123',name:'Admin',email:'',cpf:'',tel:'',adm:true}]);
+}
+
+function showLogin(){
+  document.getElementById('login').style.display='block';
+  document.getElementById('reg').style.display='none';
+  document.getElementById('adm').style.display='none';
+  clearMsg();
+}
+
+function r(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('reg').style.display='block';
+  document.getElementById('adm').style.display='none';
+  clearMsg();
+}
+
+function clearMsg(){
+  document.getElementById('m').textContent='';
+  document.getElementById('m2').textContent='';
+}
+
+function l(){
+  let u=document.getElementById('u').value.trim(),
+      p=document.getElementById('p').value,
+      us=JSON.parse(localStorage.u),
+      f=us.find(x=>x.user===u && x.pass===p);
+  if(!f){
+    document.getElementById('m').textContent='Usuário ou senha errados';
+    return;
+  }
+  localStorage.logged=JSON.stringify(f);
+  if(f.adm){
+    admPanel();
+  }else{
+    alert('Login ok, só admins acessam o painel');
+    showLogin();
+  }
+}
+
+function re(){
+  let n=document.getElementById('n').value.trim(),
+      e=document.getElementById('e').value.trim(),
+      c=document.getElementById('c').value.trim(),
+      t=document.getElementById('t').value.trim(),
+      u=document.getElementById('u2').value.trim(),
+      p=document.getElementById('p2').value;
+  if(!n||!e||!c||!u||!p){
+    document.getElementById('m2').textContent='Preencha tudo';
+    return;
+  }
+  let us=JSON.parse(localStorage.u);
+  if(us.find(x=>x.user===u)){
+    document.getElementById('m2').textContent='Usuário existe';
+    return;
+  }
+  us.push({user:u,pass:p,name:n,email:e,cpf:c,tel:t,adm:false});
+  localStorage.u=JSON.stringify(us);
+  document.getElementById('m2').style.color='green';
+  document.getElementById('m2').textContent='Registrado! Volte ao login.';
+}
+
+function admPanel(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('reg').style.display='none';
+  document.getElementById('adm').style.display='block';
+  loadTable();
+}
+
+function loadTable(){
+  let us=JSON.parse(localStorage.u),tb='';
+  us.forEach((x,i)=>{
+    tb+='<tr><td>'+x.user+'</td><td>'+x.name+'</td><td>'+x.email+'</td><td>'+x.cpf+'</td><td>'+x.tel+'</td><td>'+(x.adm?'Sim':'Não')+'</td><td>';
+    if(x.user!=='admin'){
+      tb+='<button onclick="del('+i+')">X</button> ';
+      tb+='<button onclick="tog('+i+')">'+(x.adm?'Remover':'Promover')+'</button>';
+    }
+    tb+='</td></tr>';
+  });
+  document.getElementById('tb').innerHTML=tb;
+}
+
+function del(i){
+  let us=JSON.parse(localStorage.u);
+  if(us[i].user==='admin'){alert('Não pode apagar admin');return;}
+  us.splice(i,1);
+  localStorage.u=JSON.stringify(us);
+  loadTable();
+}
+
+function tog(i){
+  let us=JSON.parse(localStorage.u);
+  if(us[i].user==='admin'){alert('Não pode mexer no admin');return;}
+  us[i].adm=!us[i].adm;
+  localStorage.u=JSON.stringify(us);
+  loadTable();
+}
+
+function out(){
+  localStorage.removeItem('logged');
+  showLogin();
+}
+
+window.onload=()=>{
+  let l=localStorage.logged?JSON.parse(localStorage.logged):null;
+  if(l && l.adm) admPanel();
+  else showLogin();
+};
+</script>
+
+</body>
+</html>
